@@ -1,6 +1,6 @@
 import unittest
 
-from htmlnode import HTMLNode, LeafNode
+from htmlnode import HTMLNode, LeafNode, ParentNode
 
 class TestHTMLNode(unittest.TestCase):
     def test_props_to_html_empty(self):
@@ -34,6 +34,37 @@ class TestLeafNode(unittest.TestCase):
     def test_leaf_node_without_value(self):
         with self.assertRaises(ValueError):
             LeafNode(tag="p")
+
+class TestParentNode(unittest.TestCase):
+    def test_parent_node_creation(self):
+        child1 = LeafNode(tag="p", value="Paragraph 1")
+        child2 = LeafNode(tag="p", value="Paragraph 2")
+        node = ParentNode(tag="div", children=[child1, child2])
+        self.assertEqual(node.tag, "div")
+        self.assertEqual(node.children, [child1, child2])
+        self.assertEqual(node.props, {})
+
+    def test_parent_node_to_html(self):
+        child1 = LeafNode(tag="p", value="Paragraph 1")
+        child2 = LeafNode(tag="p", value="Paragraph 2")
+        node = ParentNode(tag="div", children=[child1, child2])
+        self.assertEqual(node.to_html(), "<div><p>Paragraph 1</p><p>Paragraph 2</p></div>")
+
+    def test_parent_node_to_html_with_props(self):
+        child1 = LeafNode(tag="p", value="Paragraph 1")
+        child2 = LeafNode(tag="p", value="Paragraph 2")
+        node = ParentNode(tag="div", children=[child1, child2], props={"class": "container"})
+        self.assertEqual(node.to_html(), '<div class="container"><p>Paragraph 1</p><p>Paragraph 2</p></div>')
+
+    def test_parent_node_without_tag(self):
+        child1 = LeafNode(tag="p", value="Paragraph 1")
+        child2 = LeafNode(tag="p", value="Paragraph 2")
+        with self.assertRaises(ValueError):
+            ParentNode(tag=None, children=[child1, child2])
+
+    def test_parent_node_without_children(self):
+        with self.assertRaises(ValueError):
+            ParentNode(tag="div", children=None)
 
 if __name__ == "__main__":
     unittest.main()
