@@ -21,3 +21,15 @@ class HTMLNode:
         if self.props is not None:
             parts.append(f'props={self.props}')
         return f"HTMLNode({', '.join(parts)})"
+class LeafNode(HTMLNode):
+    def __init__(self, tag=None, value=None, props=None):
+        if value is None:
+            raise ValueError("The 'value' argument is required for LeafNode.")
+        super().__init__(tag, value, props)
+        self.children = None #no children
+    def to_html(self):
+        if self.value == None:
+            raise ValueError("All leaf nodes must have a value.")
+        if self.tag == None:
+            return self.value
+        return f"<{self.tag}{self.props_to_html()}>{self.value}</{self.tag}>"
