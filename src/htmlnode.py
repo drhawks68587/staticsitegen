@@ -7,7 +7,7 @@ class HTMLNode:
     def to_html(self):
         raise NotImplementedError
     def props_to_html(self):
-        if self.props == None:
+        if not self.props:  # Check for None or an empty dictionary
             return ""
         return " " + " ".join([f'{key}="{value}"' for key, value in self.props.items()])
     def __repr__(self):
@@ -25,7 +25,9 @@ class LeafNode(HTMLNode):
     def __init__(self, tag=None, value=None, props=None):
         if value is None:
             raise ValueError("The 'value' argument is required for LeafNode.")
-        super().__init__(tag, value, props)
+        if props is None:
+            props = {}
+        super().__init__(tag=tag, value=value, children=None, props=props)
         self.children = None #no children
     def to_html(self):
         if self.value == None:
