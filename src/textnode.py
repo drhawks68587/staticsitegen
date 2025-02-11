@@ -1,4 +1,5 @@
 from enum import Enum
+import re
 
 class TextType(Enum):
     NORMAL_TEXT = "text"
@@ -19,3 +20,16 @@ class TextNode:
                 self.url == other.url)
     def __repr__(self):
         return f"TextNode({self.text}, {self.text_type.value}, {self.url})"
+
+def extract_markdown_images(text):
+    pattern = r"!\[([^\[\]]*)\]\(([^\(\)]*)\)"
+    matches = re.findall(pattern, text)
+    return matches
+def extract_markdown_links(text):
+    pattern = r"(?<!!)\[([^\[\]]*)\]\(([^\(\)]*)\)"
+    matches = re.findall(pattern, text)
+    return matches
+
+
+
+
