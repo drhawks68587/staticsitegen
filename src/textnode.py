@@ -24,11 +24,11 @@ class TextNode:
 def extract_markdown_images(text):
     pattern = r"!\[([^\[\]]*)\]\(([^\(\)]*)\)"
     matches = re.findall(pattern, text)
-    return matches
+    return [url for alt_text, url in matches]  
 def extract_markdown_links(text):
     pattern = r"(?<!!)\[([^\[\]]*)\]\(([^\(\)]*)\)"
     matches = re.findall(pattern, text)
-    return matches
+    return [url for _, url in matches]
 
 
 
