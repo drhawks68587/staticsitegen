@@ -2,7 +2,7 @@ import unittest
 
 from textnode import TextNode, TextType
 from textnode import extract_markdown_images, extract_markdown_links
-from textnode import split_nodes_image, split_nodes_link
+from textnode import split_nodes_image, split_nodes_link, text_to_textnodes
 
 class TestTextNode(unittest.TestCase):
     def test_eq(self):
@@ -74,6 +74,20 @@ class TestTextNode(unittest.TestCase):
         self.assertEqual(links[1].url, "http://example.com/link2")
         self.assertEqual(others[0].text, "Normal text with ")
         self.assertEqual(others[1].text, " and ")
+
+    def test_text_to_textnodes(self):
+        text = "Normal text with [Link 1](http://example.com/link1) and [Link 2](http://example.com/link2)"
+        expected_nodes = [
+            TextNode(text="Normal text with ", text_type=TextType.NORMAL_TEXT),
+            TextNode(text="Link 1", text_type=TextType.LINKS, url="http://example.com/link1"),
+            TextNode(text=" and ", text_type=TextType.NORMAL_TEXT),
+            TextNode(text="Link 2", text_type=TextType.LINKS, url="http://example.com/link2")
+        ]
+        result_nodes = text_to_textnodes(text)
+        
+        self.assertEqual(len(result_nodes), len(expected_nodes))
+        for result_node, expected_node in zip(result_nodes, expected_nodes):
+            self.assertEqual(result_node, expected_node)
 
 if __name__ == "__main__":
     unittest.main()
