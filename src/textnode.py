@@ -20,6 +20,37 @@ class TextNode:
                 self.url == other.url)
     def __repr__(self):
         return f"TextNode({self.text}, {self.text_type.value}, {self.url})"
+    
+def split_nodes_delimiter(old_nodes, delimiter, text_type):
+    results = []
+    for node in old_nodes:
+        if node.text_type != TextType.NORMAL_TEXT:  # Changed this line
+            results.append(node)
+            continue
+            
+        text = node.text
+        delimiter_index = text.find(delimiter)
+
+        if delimiter_index == -1:
+            results.append(node)
+            continue
+            
+        start_search_index = delimiter_index + len(delimiter)
+        closing_index = text.find(delimiter, start_search_index)
+        if closing_index == -1:
+            raise ValueError("no closing delimiter found!")
+        
+        before = text[:delimiter_index]
+        between = text[delimiter_index + len(delimiter):closing_index]
+        after = text[closing_index + len(delimiter):]
+
+        if before:
+            results.append(TextNode(before, TextType.NORMAL_TEXT))
+        if between:
+            results.append(TextNode(between, text_type))
+        if after:
+            results.append(TextNode(after, TextType.NORMAL_TEXT))
+    return results
 
 def extract_markdown_images(text):
     # Match markdown images: ![alt text](URL)
@@ -37,41 +68,37 @@ def extract_markdown_links(text):
     return [{'text': link_text, 'href': url} for link_text, url in matches]
 
 def split_nodes_image(old_nodes):
-    new_nodes = []  # Final list of nodes, preserving order
+    image_nodes = []  # List for image nodes
+    other_nodes = []  # List for non-image nodes
 
     for node in old_nodes:
         if node.text_type == TextType.NORMAL_TEXT:
-            images = extract_markdown_images(node.text)  # Extract images
+            images = extract_markdown_images(node.text)
             if images:
-                remaining_text = node.text  # Start with the full text
+                remaining_text = node.text
 
                 for image in images:
-                    # Image markdown to split around
                     full_markdown = f"![{image['alt']}]({image['src']})"
-
-                    # Split text at the image markdown, keeping before and after parts
                     parts = remaining_text.split(full_markdown, 1)
                     before = parts[0]
                     remaining_text = parts[1] if len(parts) > 1 else ""
 
-                    # Add the text before the image markdown (if non-empty)
+                    # Add non-image text to "others"
                     if before:
-                        new_nodes.append(TextNode(before, TextType.NORMAL_TEXT))
+                        other_nodes.append(TextNode(before, TextType.NORMAL_TEXT))
+                    
+                    # Add image node to "image_nodes"
+                    image_nodes.append(TextNode(image['alt'], TextType.IMAGES, image['src']))
 
-                    # Create and add the image node
-                    new_nodes.append(TextNode(image['alt'], TextType.IMAGES, image['src']))
-
-                # Process any remaining text after the last image
+                # Add remaining text to "others"
                 if remaining_text:
-                    new_nodes.append(TextNode(remaining_text, TextType.NORMAL_TEXT))
+                    other_nodes.append(TextNode(remaining_text, TextType.NORMAL_TEXT))
             else:
-                # No images in text, so add the whole node as-is
-                new_nodes.append(node)
+                other_nodes.append(node)
         else:
-            # Not normal text, so add the whole node as-is
-            new_nodes.append(node)
+            other_nodes.append(node)
 
-    return new_nodes
+    return image_nodes, other_nodes
 
 
 def split_nodes_link(old_nodes):
@@ -107,48 +134,22 @@ def split_nodes_link(old_nodes):
     return link_nodes, other_nodes
 
 def text_to_textnodes(text):
+    # Start with a single text node
     nodes = [TextNode(text, TextType.NORMAL_TEXT)]
-    new_nodes = []
-
-    for node in nodes: #splitting links
-        if node.text_type == TextType.NORMAL_TEXT:
-            result = split_nodes_link(node.text)
-            new_nodes.extend(result)
-        else:
-            new_nodes.append(node)
-    nodes = new_nodes
-    new_nodes = []
-    for node in nodes: #splitting images
-        if node.text_type == TextType.NORMAL_TEXT:
-            result = split_nodes_image(node.text)
-            new_nodes.extend(result)
-        else:
-            new_nodes.append(node)
-    nodes = new_nodes
-    new_nodes = []
-    for node in nodes: #splitting code
-        if node.text_type == TextType.NORMAL_TEXT:
-            result = split_nodes_delimiter(node.text, "`", TextType.CODE_TEXT)
-            new_nodes.extend(result)
-        else:
-            new_nodes.append(node)
-    nodes = new_nodes
-    new_nodes = []
-    for node in nodes: #splitting bold
-        if node.text_type == TextType.NORMAL_TEXT:
-            result = split_nodes_delimiter(node.text, "**", TextType.BOLD_TEXT)
-            new_nodes.extend(result)
-        else:
-            new_nodes.append(node)
-    nodes = new_nodes
-    new_nodes = []
-    for node in nodes: #splitting italic
-        if node.text_type == TextType.NORMAL_TEXT:
-            result = split_nodes_delimiter(node.text, "*", TextType.ITALIC_TEXT)
-            new_nodes.extend(result)
-        else:
-            new_nodes.append(node)
-    nodes = new_nodes
+    
+    # Handle images
+    image_nodes, other_nodes = split_nodes_image(nodes)
+    nodes = other_nodes + image_nodes
+    
+    # Handle links
+    link_nodes, other_nodes = split_nodes_link(nodes)
+    nodes = other_nodes + link_nodes
+    
+    # Handle other delimiters
+    nodes = split_nodes_delimiter(nodes, "`", TextType.CODE_TEXT)
+    nodes = split_nodes_delimiter(nodes, "**", TextType.BOLD_TEXT)
+    nodes = split_nodes_delimiter(nodes, "*", TextType.ITALIC_TEXT)
+    
     return nodes
 
 

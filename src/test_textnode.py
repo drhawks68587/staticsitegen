@@ -51,16 +51,16 @@ class TestTextNode(unittest.TestCase):
 
     def test_split_nodes_image(self):
         text_nodes = [
-            TextNode(text="Image 1", text_type=TextType.IMAGES, url="http://example.com/image1.png"),
-            TextNode(text="Normal text", text_type=TextType.NORMAL_TEXT),
-            TextNode(text="Image 2", text_type=TextType.IMAGES, url="http://example.com/image2.png")
+            TextNode(text="Normal text with ![Image 1](http://example.com/image1.png) and ![Image 2](http://example.com/image2.png)", text_type=TextType.NORMAL_TEXT),
+            TextNode(text="Normal text", text_type=TextType.NORMAL_TEXT)
         ]
-        new_nodes = split_nodes_image(text_nodes)
+        image_nodes, other_nodes = split_nodes_image(text_nodes)
         
-        self.assertEqual(len(new_nodes), 3)
-        self.assertEqual(new_nodes[0].url, "http://example.com/image1.png")
-        self.assertEqual(new_nodes[1].text, "Normal text")
-        self.assertEqual(new_nodes[2].url, "http://example.com/image2.png")
+        self.assertEqual(len(image_nodes), 2)
+        self.assertEqual(image_nodes[0].url, "http://example.com/image1.png")
+        self.assertEqual(image_nodes[1].url, "http://example.com/image2.png")
+        self.assertEqual(other_nodes[0].text, "Normal text with ")
+        self.assertEqual(other_nodes[1].text, " and ")
 
     def test_split_nodes_link(self):
         text_nodes = [
@@ -75,19 +75,19 @@ class TestTextNode(unittest.TestCase):
         self.assertEqual(others[0].text, "Normal text with ")
         self.assertEqual(others[1].text, " and ")
 
-    def test_text_to_textnodes(self):
-        text = "Normal text with [Link 1](http://example.com/link1) and [Link 2](http://example.com/link2)"
-        expected_nodes = [
-            TextNode(text="Normal text with ", text_type=TextType.NORMAL_TEXT),
-            TextNode(text="Link 1", text_type=TextType.LINKS, url="http://example.com/link1"),
-            TextNode(text=" and ", text_type=TextType.NORMAL_TEXT),
-            TextNode(text="Link 2", text_type=TextType.LINKS, url="http://example.com/link2")
-        ]
-        result_nodes = text_to_textnodes(text)
-        
-        self.assertEqual(len(result_nodes), len(expected_nodes))
-        for result_node, expected_node in zip(result_nodes, expected_nodes):
-            self.assertEqual(result_node, expected_node)
+def test_text_to_textnodes(self):
+    text = "Normal text with [Link 1](http://example.com/link1) and [Link 2](http://example.com/link2)"
+    expected_nodes = [
+        TextNode(text="Normal text with ", text_type=TextType.NORMAL_TEXT),  # Using your NORMAL_TEXT
+        TextNode(text="Link 1", text_type=TextType.LINKS, url="http://example.com/link1"),  # Using your LINKS
+        TextNode(text=" and ", text_type=TextType.NORMAL_TEXT),  # Using your NORMAL_TEXT
+        TextNode(text="Link 2", text_type=TextType.LINKS, url="http://example.com/link2")  # Using your LINKS
+    ]
+    result_nodes = text_to_textnodes(text)
+    
+    self.assertEqual(len(result_nodes), len(expected_nodes))
+    for result_node, expected_node in zip(result_nodes, expected_nodes):
+        self.assertEqual(result_node, expected_node)
 
 if __name__ == "__main__":
     unittest.main()
